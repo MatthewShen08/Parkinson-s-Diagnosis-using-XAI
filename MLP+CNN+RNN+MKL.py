@@ -1,4 +1,5 @@
 import os
+import time
 import pandas as pd
 import numpy as np
 import parselmouth
@@ -127,20 +128,31 @@ keras_gru_model = KerasClassifier(model=create_gru_model, input_shape=X_train_se
                                              ReduceLROnPlateau(monitor='val_loss', factor=0.3, patience=3, min_lr=0.00001)],
                                   class_weight={0: 1.1, 1: 1.2})
 
-# Random Forest model for ensemble
+# Random Forest model for ensemble (pre-fit for integration into ensemble)
 rf_model = RandomForestClassifier(n_estimators=100, random_state=42)
 rf_model.fit(X_train_selected, y_train)
 
 # Ensemble voting model (soft voting)
 ensemble_model = VotingClassifier(estimators=[('gru', keras_gru_model), ('rf', rf_model)], voting='soft')
-ensemble_model.fit(X_train_selected, y_train)  # No need to reshape for sklearn models
+
+# Measure training time for the ensemble model
+train_start = time.time()
+ensemble_model.fit(X_train_selected, y_train)  # This trains the GRU model within the ensemble
+train_end = time.time()
+training_time = train_end - train_start
+print(f"Ensemble model training time: {training_time:.2f} seconds")
 
 # Evaluate the ensemble model
 ensemble_accuracy = ensemble_model.score(X_test_selected, y_test)
 print(f"Ensemble Test Accuracy: {ensemble_accuracy * 100:.2f}%")
 
-# Predict on the blind data using the ensemble model
+# Measure inference time for predicting the blind data
+inference_start = time.time()
 blind_predictions = ensemble_model.predict(X_blind_selected)
+inference_end = time.time()
+inference_time = inference_end - inference_start
+print(f"Ensemble model inference time: {inference_time:.2f} seconds")
+
 blind_pred_labels = blind_predictions.astype(int).flatten()
 
 # Compare predictions with actual labels (for test data)

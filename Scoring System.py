@@ -7,7 +7,6 @@ import librosa
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier
 
-# Set pandas to display more rows and adjust column width for display
 pd.set_option('display.max_rows', None)
 pd.set_option('display.max_colwidth', None)  # Ensures no truncation for any column
 
